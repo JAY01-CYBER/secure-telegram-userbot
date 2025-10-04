@@ -160,14 +160,16 @@ export class AdvancedFeatures {
     const { message, args } = ctx;
     
     try {
-      let name1 = message.sender?.firstName || "You";
+      const senderName = ctx.sender && 'firstName' in ctx.sender ? ctx.sender.firstName : "You"; // FIXED: Type-safe firstName access
+      let name1 = senderName;
       let name2 = "Someone";
       
       if (args.length > 0) {
         name2 = args.join(' ');
       } else if (message.replyToMsgId) {
-        const repliedUser = await (await message.getReplyMessage()).getSender();
-        name2 = repliedUser?.firstName || "Them";
+        const repliedMsg = await message.getReplyMessage();
+        const repliedUser = await repliedMsg.getSender();
+        name2 = repliedUser && 'firstName' in repliedUser ? repliedUser.firstName : "Them";
       }
 
       const lovePercent = Math.floor(Math.random() * 100) + 1;
@@ -257,10 +259,11 @@ export class AdvancedFeatures {
     try {
       const userId = message.senderId;
       const userStat = this.userStats.get(userId) || { messages: 0, lastSeen: new Date() };
+      const senderName = ctx.sender && 'firstName' in ctx.sender ? ctx.sender.firstName : 'User'; // FIXED: Type-safe firstName access
       
       await message.reply({
         message: `📊 **Your Statistics**\n\n` +
-                 `👤 **User:** ${message.sender?.firstName}\n` +
+                 `👤 **User:** ${senderName}\n` +
                  `💬 **Messages Sent:** ${userStat.messages}\n` +
                  `👀 **Last Active:** ${userStat.lastSeen.toLocaleDateString()}\n` +
                  `🆔 **User ID:** ${userId}\n\n` +
@@ -346,7 +349,8 @@ export class AdvancedFeatures {
     for (const [id, reminder] of this.reminders.entries()) {
       if (reminder.time <= now) {
         try {
-          await this.client.sendMessage(reminder.userId, {
+          // FIXED: Convert bigint to string for sendMessage
+          await this.client.sendMessage(reminder.userId.toString(), {
             message: `⏰ **Reminder!**\n\n${reminder.message}`
           });
           this.reminders.delete(id);
@@ -358,8 +362,8 @@ export class AdvancedFeatures {
     }
   }
 
-  // Track user activity
-  public trackUserActivity(userId: bigint): void { // FIXED: big64 → bigint
+  // Track user activity - FIXED: Parameter type
+  public trackUserActivity(userId: bigint): void {
     const currentStat = this.userStats.get(userId) || { messages: 0, lastSeen: new Date() };
     this.userStats.set(userId, {
       messages: currentStat.messages + 1,
