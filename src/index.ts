@@ -514,7 +514,7 @@ process.on('unhandledRejection', (reason, promise) => {
 setInterval(() => {
   const memory = Helpers.getMemoryUsage();
   if (memory.heapUsed > 200) { // 200MB threshold
-    logger.warn(`High memory usage: ${memory.heapUsed}MB Heap`); // FIXED: warning → warn
+    logger.warning(`High memory usage: ${memory.heapUsed}MB Heap`); // FIXED: warning → warn
   }
 }, 60000); // Check every minute
 
