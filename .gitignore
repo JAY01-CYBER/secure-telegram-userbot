@@ -1,0 +1,31 @@
+# Environment
+.env
+.env.local
+.env.production
+*.env
+
+# Sessions
+*.session
+session/
+sessions/
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependencies
+node_modules/
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
