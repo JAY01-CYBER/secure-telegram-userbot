@@ -6,8 +6,8 @@ import type { CommandContext, CommandResult } from '../types/index.js';
 
 export class AdvancedFeatures {
   private client: TelegramClient;
-  private userStats: Map<big64, { messages: number; lastSeen: Date }> = new Map();
-  private reminders: Map<string, { userId: big64; time: Date; message: string }> = new Map();
+  private userStats: Map<bigint, { messages: number; lastSeen: Date }> = new Map(); // FIXED: big64 → bigint
+  private reminders: Map<string, { userId: bigint; time: Date; message: string }> = new Map(); // FIXED: big64 → bigint
   private quotes: string[] = [
     "The only way to do great work is to love what you do. - Steve Jobs",
     "Innovation distinguishes between a leader and a follower. - Steve Jobs",
@@ -303,7 +303,7 @@ export class AdvancedFeatures {
     
     try {
       // Only allow specific users (add your user ID)
-      const allowedUsers: big64[] = []; // Add your user ID here
+      const allowedUsers: bigint[] = []; // FIXED: big64 → bigint
       
       if (allowedUsers.length > 0 && !allowedUsers.includes(message.senderId)) {
         await message.reply({ message: '⛔ **Access Denied**', parseMode: 'html' });
@@ -359,7 +359,7 @@ export class AdvancedFeatures {
   }
 
   // Track user activity
-  public trackUserActivity(userId: big64): void {
+  public trackUserActivity(userId: bigint): void { // FIXED: big64 → bigint
     const currentStat = this.userStats.get(userId) || { messages: 0, lastSeen: new Date() };
     this.userStats.set(userId, {
       messages: currentStat.messages + 1,
