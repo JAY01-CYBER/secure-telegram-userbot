@@ -8,7 +8,7 @@ export class FeatureHandler {
   private client: TelegramClient;
   private autoReplies: Map<string, string> = new Map();
   private spamFilters: Set<string> = new Set();
-  private allowedUsers: Set<big64> = new Set();
+  private allowedUsers: Set<bigint> = new Set(); // FIXED: big64 → bigint
 
   constructor(client: TelegramClient) {
     this.client = client;
