@@ -1,6 +1,6 @@
 import { Api } from 'telegram';
 import type { NewMessageEvent } from 'telegram/events';
-import { logger } from '@utils/logger';
+import { logger } from '../utils/logger.js'; // FIXED: Correct import path
 
 export async function messageHandler(event: NewMessageEvent) {
   const message = event.message;
