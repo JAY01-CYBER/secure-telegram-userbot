@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: telegram-userbot
+    env: node
+    plan: free
+    region: singapore
+    branch: main
+    buildCommand: |
+      npm install
+      npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 18.17.0
+      - key: NODE_ENV
+        value: production
