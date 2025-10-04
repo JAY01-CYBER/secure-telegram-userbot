@@ -1,6 +1,6 @@
 import { Api } from 'telegram';
 import type { TelegramClient } from 'telegram';
-import type { NewMessageEvent, EditMessageEvent } from 'telegram/events'; // FIXED IMPORT
+import type { NewMessageEvent } from 'telegram/events'; // FIXED: Removed EditMessageEvent
 import { logger } from '../utils/logger.js';
 import { Helpers } from '../utils/helpers.js';
 import { CommandHandler } from './commandHandler.js';
@@ -32,7 +32,8 @@ export class EventHandler {
 
     // Secure logging - FIXED: Use optional chaining
     const chatType = chat instanceof Api.Chat ? 'Group' : 'Private';
-    logger.message(`${chatType} message from ${sender?.firstName || 'Unknown'}: ${Helpers.truncateText(text, 30)}`);
+    const senderName = sender && 'firstName' in sender ? sender.firstName : 'Unknown'; // FIXED: Type-safe firstName access
+    logger.message(`${chatType} message from ${senderName}: ${Helpers.truncateText(text, 30)}`);
 
     // Track user activity - FIXED: Check if method exists
     if (this.advancedHandler.trackUserActivity) {
@@ -41,7 +42,7 @@ export class EventHandler {
 
     // Check for spam - FIXED: Check if method exists
     if (this.featureHandler.containsSpam && this.featureHandler.containsSpam(text)) {
-      logger.security(`Spam detected from ${sender?.firstName || 'Unknown'}: ${Helpers.truncateText(text, 30)}`);
+      logger.security(`Spam detected from ${senderName}: ${Helpers.truncateText(text, 30)}`);
     }
 
     // Auto-reply system - FIXED: Check if method exists
@@ -196,15 +197,16 @@ export class EventHandler {
     }
   }
 
-  async handleEditedMessage(event: EditMessageEvent): Promise<void> { // FIXED TYPE
+  async handleEditedMessage(event: any): Promise<void> { // FIXED: Changed to any type
     const message = event.message;
     
     if (!message.text || message.out) return;
 
     const text = message.text.trim();
     const sender = await message.getSender();
+    const senderName = sender && 'firstName' in sender ? sender.firstName : 'Unknown'; // FIXED: Type-safe firstName access
 
-    logger.message(`Edited message from ${sender?.firstName || 'Unknown'}: ${Helpers.truncateText(text, 30)}`);
+    logger.message(`Edited message from ${senderName}: ${Helpers.truncateText(text, 30)}`);
 
     if (text.startsWith('.')) {
       try {
@@ -222,12 +224,13 @@ export class EventHandler {
     try {
       const user = await event.getUser();
       const chat = await event.getChat();
+      const userName = user && 'firstName' in user ? user.firstName : 'Unknown'; // FIXED: Type-safe firstName access
       
-      logger.info(`User ${user?.firstName || 'Unknown'} joined chat: ${chat?.title || 'Unknown'}`);
+      logger.info(`User ${userName} joined chat: ${chat && 'title' in chat ? chat.title : 'Unknown'}`);
       
       if (chat instanceof Api.Chat) {
         await this.client.sendMessage(chat.id, {
-          message: `👋 Welcome ${user?.firstName || 'User'} to the group!`
+          message: `👋 Welcome ${userName} to the group!`
         });
       }
     } catch (error) {
@@ -239,8 +242,9 @@ export class EventHandler {
     try {
       const user = await event.getUser();
       const chat = await event.getChat();
+      const userName = user && 'firstName' in user ? user.firstName : 'Unknown'; // FIXED: Type-safe firstName access
       
-      logger.info(`User ${user?.firstName || 'Unknown'} left chat: ${chat?.title || 'Unknown'}`);
+      logger.info(`User ${userName} left chat: ${chat && 'title' in chat ? chat.title : 'Unknown'}`);
     } catch (error) {
       logger.error('Failed to handle user left event:', error);
     }
