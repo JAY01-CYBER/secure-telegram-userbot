@@ -34,7 +34,7 @@ export class Helpers {
             
             // Find user and check admin status
             for (const participant of participants) {
-                if (participant.id && BigInt(participant.id) === userId) {
+                if (participant.id && BigInt(participant.id.toString()) === userId) {
                     // Check if participant is admin or creator
                     if (participant instanceof Api.ChannelParticipantAdmin ||
                         participant instanceof Api.ChannelParticipantCreator) {
