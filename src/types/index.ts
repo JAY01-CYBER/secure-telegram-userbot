@@ -1,3 +1,9 @@
+// Re-export all types from individual files
+export * from './telegram.js';
+export * from './commands.js';
+export * from './events.js';
+
+// Main types that were originally in index.ts
 import { Api } from 'telegram';
 import type { TelegramClient } from 'telegram';
 
@@ -27,16 +33,6 @@ export interface CommandRegistry {
 export interface EventHandler {
   event: string;
   handler: (client: TelegramClient, event: any) => Promise<void>;
-}
-
-export interface NewMessageEvent {
-  message: Api.Message;
-  client: TelegramClient;
-}
-
-export interface EditedMessageEvent {
-  message: Api.Message;
-  client: TelegramClient;
 }
 
 // User related types
@@ -206,8 +202,148 @@ export interface ProcessEnv {
   [key: string]: string | undefined;
 }
 
-// Export commonly used types
+// Common type aliases for better readability
+export type UserID = big64;
+export type ChatID = big64;
+export type MessageID = number;
+export type FileID = string;
+
+// Generic response type for API calls
+export interface GenericResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+  code?: number;
+}
+
+// Pagination types
+export interface PaginationParams {
+  page: number;
+  limit: number;
+  offset: number;
+}
+
+export interface PaginatedResponse<T = any> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
+// Filter types
+export interface DateRange {
+  start: Date;
+  end: Date;
+}
+
+export interface TextFilter {
+  contains?: string;
+  equals?: string;
+  startsWith?: string;
+  endsWith?: string;
+}
+
+// Export commonly used types from telegram
 export type {
   Api,
   TelegramClient
 } from 'telegram';
+
+// BigInt type for Telegram IDs (since Telegram uses big numbers)
+export type big64 = bigint;
+
+// Async result type for better error handling
+export type AsyncResult<T, E = Error> = Promise<{ data: T; error: null } | { data: null; error: E }>;
+
+// Configuration type for the entire bot
+export interface BotConfiguration {
+  telegram: {
+    apiId: number;
+    apiHash: string;
+    sessionString: string;
+  };
+  features: {
+    enableCommands: boolean;
+    enableEvents: boolean;
+    enableWebServer: boolean;
+    enableFileHandling: boolean;
+  };
+  security: {
+    ownerId: big64;
+    adminIds: big64[];
+    blockedUsers: big64[];
+    rateLimit: {
+      enabled: boolean;
+      maxRequests: number;
+      windowMs: number;
+    };
+  };
+  logging: {
+    level: 'error' | 'warn' | 'info' | 'debug';
+    filePath?: string;
+    maxSize: number;
+  };
+  webServer: {
+    port: number;
+    enableHealthCheck: boolean;
+    enableMetrics: boolean;
+  };
+}
+
+// State management types
+export interface BotState {
+  isConnected: boolean;
+  startTime: Date;
+  totalMessages: number;
+  activeChats: number;
+  lastError?: Error;
+  features: {
+    [key: string]: boolean;
+  };
+}
+
+// Plugin system types (for future extensibility)
+export interface Plugin {
+  name: string;
+  version: string;
+  description: string;
+  author: string;
+  enabled: boolean;
+  initialize: (client: TelegramClient) => Promise<void>;
+  destroy: () => Promise<void>;
+}
+
+export interface PluginManager {
+  plugins: Plugin[];
+  register: (plugin: Plugin) => void;
+  unregister: (name: string) => void;
+  enable: (name: string) => void;
+  disable: (name: string) => void;
+}
+
+// Middleware types
+export type Middleware = (ctx: CommandContext, next: () => Promise<void>) => Promise<void>;
+
+export interface MiddlewareStack {
+  use: (middleware: Middleware) => void;
+  execute: (ctx: CommandContext) => Promise<void>;
+}
+
+// Cache types
+export interface CacheEntry<T = any> {
+  value: T;
+  expires: number;
+}
+
+export interface CacheStore {
+  get: <T>(key: string) => Promise<T | null>;
+  set: <T>(key: string, value: T, ttl?: number) => Promise<void>;
+  delete: (key: string) => Promise<void>;
+  clear: () => Promise<void>;
+}
