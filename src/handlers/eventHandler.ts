@@ -38,7 +38,7 @@ export class EventHandler {
     // Track user activity - FIXED: Check if method exists
     if (this.advancedHandler.trackUserActivity) {
     if (message.senderId) {
-    this.advancedHandler.trackUserActivity(BigInt(message.senderId));
+    this.advancedHandler.trackUserActivity(BigInt(message.senderId.toString()));
     }
     }
 
