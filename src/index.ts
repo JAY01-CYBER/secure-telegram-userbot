@@ -27,7 +27,7 @@ const config: BotConfiguration = {
     enableCommands: true,
     enableEvents: true,
     enableWebServer: true,
-    enableFileHandling: false
+    enableFileHandling: true // Enabled for media features
   },
   security: {
     ownerId: BigInt(process.env.OWNER_ID || '0'),
@@ -46,21 +46,61 @@ const config: BotConfiguration = {
   webServer: {
     port: parseInt(process.env.PORT || '3000'),
     enableHealthCheck: true,
-    enableMetrics: false
+    enableMetrics: true // Enabled for stats
   }
 };
 
-// Bot state management
+// Enhanced Bot state management with all features
 const botState: BotState = {
   isConnected: false,
   startTime: new Date(),
   totalMessages: 0,
   activeChats: 0,
   features: {
+    // Core features
     commands: config.features.enableCommands,
     events: config.features.enableEvents,
     webServer: config.features.enableWebServer,
-    fileHandling: config.features.enableFileHandling
+    fileHandling: config.features.enableFileHandling,
+    
+    // Media & File features
+    media: true,
+    fileOperations: true,
+    
+    // Group Management features
+    groupManagement: true,
+    adminTools: true,
+    
+    // Utility features
+    utilities: true,
+    calculator: true,
+    weather: true,
+    
+    // Fun & Entertainment features
+    games: true,
+    entertainment: true,
+    quotes: true,
+    
+    // Download & Information features
+    downloads: true,
+    information: true,
+    
+    // Automation features
+    automation: true,
+    autoReply: true,
+    reminders: true,
+    
+    // Security features
+    security: true,
+    antiSpam: true,
+    
+    // User features
+    statistics: true,
+    userTracking: true,
+    
+    // Admin features
+    broadcast: true,
+    systemControl: true
   }
 };
 
@@ -72,12 +112,11 @@ const client = new TelegramClient(
   {
     connectionRetries: 5,
     useWSS: true, // WebSocket for better connection
-    deviceModel: 'Secure-Userbot-Server',
+    deviceModel: 'Ultimate-Userbot-Server',
     systemVersion: 'Node.js v18+',
-    appVersion: '2.0.0',
+    appVersion: '3.0.0',
     langCode: 'en',
     systemLangCode: 'en',
-    baseLogger: logger as any,
     timeout: 10000,
     requestRetries: 3,
     connectionParams: {
@@ -96,15 +135,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// Root endpoint - Basic info
+// Root endpoint - Complete info
 app.get('/', (req, res) => {
   const uptime = Helpers.formatUptime(process.uptime());
   const memory = Helpers.getMemoryUsage();
   const activeFeatures = Object.keys(botState.features).filter(f => botState.features[f]);
   
   res.json({
-    status: '🛡️ Secure Telegram Userbot - ACTIVE',
-    version: '2.0.0',
+    status: '🚀 Ultimate Telegram Userbot - ACTIVE',
+    version: '3.0.0',
     platform: 'Node.js + TypeScript',
     environment: process.env.NODE_ENV || 'development',
     uptime: uptime,
@@ -116,30 +155,40 @@ app.get('/', (req, res) => {
     bot: {
       connected: botState.isConnected,
       startTime: botState.startTime,
-      totalMessages: botState.totalMessages
+      totalMessages: botState.totalMessages,
+      activeChats: botState.activeChats
     },
-    features: activeFeatures,
+    features: {
+      total: activeFeatures.length,
+      enabled: activeFeatures
+    },
     timestamp: new Date().toISOString(),
     endpoints: [
       '/health - Health check',
       '/status - Detailed status',
-      '/info - Bot information'
+      '/info - Bot information',
+      '/features - Available features'
     ]
   });
 });
 
 // Health check endpoint for Render
 app.get('/health', (req, res) => {
+  const memory = Helpers.getMemoryUsage();
   const healthStatus = {
     status: botState.isConnected ? 'healthy' : 'unhealthy',
     uptime: process.uptime(),
-    memory: Helpers.getMemoryUsage(),
+    memory: memory,
     telegram: {
       connected: botState.isConnected,
       connectionTime: botState.startTime
     },
+    system: {
+      nodeVersion: process.version,
+      platform: process.platform
+    },
     timestamp: new Date().toISOString(),
-    version: '2.0.0'
+    version: '3.0.0'
   };
 
   // Return appropriate status code
@@ -164,6 +213,7 @@ app.get('/status', (req, res) => {
     system: {
       nodeVersion: process.version,
       platform: process.platform,
+      architecture: process.arch,
       memory: memory,
       pid: process.pid,
       uptime: uptime
@@ -172,7 +222,7 @@ app.get('/status', (req, res) => {
       ...config,
       telegram: {
         apiId: config.telegram.apiId,
-        apiHash: '***HIDDEN***', // Hide sensitive info
+        apiHash: '***HIDDEN***',
         sessionString: '***HIDDEN***'
       },
       security: {
@@ -188,33 +238,83 @@ app.get('/status', (req, res) => {
 // Bot information endpoint
 app.get('/info', (req, res) => {
   res.json({
-    name: 'Secure Telegram Userbot',
-    description: 'A secure and modern Telegram userbot built with Node.js and TypeScript',
-    version: '2.0.0',
+    name: 'Ultimate Telegram Userbot',
+    description: 'A feature-rich Telegram userbot built with Node.js and TypeScript',
+    version: '3.0.0',
     author: 'Your Name',
     repository: 'https://github.com/yourusername/telegram-userbot',
+    
     features: [
       '🔒 Secure session management',
       '🚀 Fast Node.js + TypeScript',
       '🛡️ Environment variable protection',
       '📊 Health monitoring',
       '⚡ Modern command system',
-      '🔧 Easy deployment on Render'
+      '🔧 Easy deployment on Render',
+      '🎮 25+ Commands & Features',
+      '🤖 Advanced automation',
+      '🛡️ Security & anti-spam',
+      '📱 Media & file handling'
     ],
-    commands: [
-      '.ping - Test bot response',
-      '.status - Show bot status', 
-      '.speed - Test response speed',
-      '.echo <text> - Echo your message',
-      '.help - Show all commands'
-    ],
+    
     technology: [
       'Node.js v18+',
       'TypeScript',
       'Telegram MTProto',
       'Express.js',
       'Render.com'
-    ]
+    ],
+    
+    statistics: {
+      totalCommands: 25,
+      categories: 10,
+      features: Object.keys(botState.features).filter(f => botState.features[f]).length
+    }
+  });
+});
+
+// Features endpoint - Show all available features
+app.get('/features', (req, res) => {
+  const features = {
+    'Basic Commands': ['.ping', '.status', '.speed', '.echo', '.help'],
+    'Media & File': ['.caption', '.rename'],
+    'Group Management': ['.ban', '.members'],
+    'Utilities': ['.weather', '.calc'],
+    'Fun & Games': ['.dice', '.joke', '.quiz', '.love', '.quote'],
+    'Download & Info': ['.ytdl', '.ud', '.wikipedia'],
+    'Automation': ['.autoreply', '.addar', '.reminder'],
+    'Security': ['.antispam', '.addfilter'],
+    'User Features': ['.stats'],
+    'Admin Features': ['.broadcast', '.restart']
+  };
+
+  res.json({
+    totalCategories: Object.keys(features).length,
+    totalCommands: Object.values(features).flat().length,
+    features: features
+  });
+});
+
+// Metrics endpoint for monitoring
+app.get('/metrics', (req, res) => {
+  const memory = Helpers.getMemoryUsage();
+  const uptime = process.uptime();
+  
+  res.json({
+    timestamp: new Date().toISOString(),
+    uptime: uptime,
+    memory: memory,
+    process: {
+      pid: process.pid,
+      platform: process.platform,
+      nodeVersion: process.version,
+      uptime: process.uptime()
+    },
+    bot: {
+      connected: botState.isConnected,
+      startTime: botState.startTime,
+      totalMessages: botState.totalMessages
+    }
   });
 });
 
@@ -226,7 +326,9 @@ app.use('*', (req, res) => {
       'GET /',
       'GET /health', 
       'GET /status',
-      'GET /info'
+      'GET /info',
+      'GET /features',
+      'GET /metrics'
     ]
   });
 });
@@ -247,12 +349,27 @@ app.use((error: any, req: any, res: any, next: any) => {
  */
 async function initializeUserbot(): Promise<void> {
   try {
-    logger.info('🚀 Starting Secure Telegram Userbot...');
-    logger.info('📋 Configuration Summary:');
+    logger.info('🚀 Starting Ultimate Telegram Userbot...');
+    logger.info('='.repeat(50));
+    logger.info('🎯 FEATURE SUMMARY:');
+    logger.info(`   • Basic Commands: 5 commands`);
+    logger.info(`   • Media & File: 2 commands`);
+    logger.info(`   • Group Management: 2 commands`);
+    logger.info(`   • Utilities: 2 commands`);
+    logger.info(`   • Fun & Games: 5 commands`);
+    logger.info(`   • Download & Info: 3 commands`);
+    logger.info(`   • Automation: 3 commands`);
+    logger.info(`   • Security: 2 commands`);
+    logger.info(`   • User Features: 1 command`);
+    logger.info(`   • Admin Features: 2 commands`);
+    logger.info('='.repeat(50));
+    
+    logger.info('📋 Configuration:');
     logger.info(`   • Environment: ${process.env.NODE_ENV || 'development'}`);
     logger.info(`   • Web Server: ${config.features.enableWebServer ? 'Enabled' : 'Disabled'}`);
     logger.info(`   • Commands: ${config.features.enableCommands ? 'Enabled' : 'Disabled'}`);
     logger.info(`   • Events: ${config.features.enableEvents ? 'Enabled' : 'Disabled'}`);
+    logger.info(`   • File Handling: ${config.features.enableFileHandling ? 'Enabled' : 'Disabled'}`);
     logger.info(`   • Port: ${config.webServer.port}`);
     
     // Start Telegram client
@@ -279,7 +396,7 @@ async function initializeUserbot(): Promise<void> {
     botState.isConnected = true;
     
     logger.success('✅ Telegram authentication successful!');
-    logger.success(`👤 Logged in as: ${me.firstName} (@${me.username})`);
+    logger.success(`👤 Logged in as: ${me.firstName} (@${me.username || 'N/A'})`);
     logger.success(`🆔 User ID: ${me.id}`);
     logger.success(`📱 Phone: ${me.phone || 'Not available'}`);
 
@@ -293,10 +410,10 @@ async function initializeUserbot(): Promise<void> {
       client.addEventHandler(handlers.editedMessage);
       
       if (config.features.enableCommands) {
-        logger.info('🔧 Command system enabled');
+        logger.info('🔧 Command system enabled - 25+ commands available');
       }
       
-      logger.success('✅ Event handlers registered successfully');
+      logger.success('✅ All event handlers registered successfully');
     }
 
     // Start web server if enabled
@@ -306,10 +423,13 @@ async function initializeUserbot(): Promise<void> {
 
     // Final startup message
     const memory = Helpers.getMemoryUsage();
-    logger.success('🎉 Secure Telegram Userbot started successfully!');
+    logger.success('🎉 ULTIMATE TELEGRAM USERBOT STARTED SUCCESSFULLY!');
+    logger.info('='.repeat(50));
     logger.info(`💾 Memory usage: ${memory.rss}MB RSS, ${memory.heapUsed}MB Heap`);
     logger.info(`⏰ Startup time: ${new Date().toISOString()}`);
-    logger.info(`🚀 Ready to process messages...`);
+    logger.info(`🚀 Ready to process messages with 25+ features!`);
+    logger.info(`💡 Use '.help' to see all available commands`);
+    logger.info('='.repeat(50));
 
   } catch (error) {
     logger.error('❌ Failed to initialize userbot:', error);
@@ -324,9 +444,11 @@ async function startWebServer(): Promise<void> {
   return new Promise((resolve, reject) => {
     const server = app.listen(port, () => {
       logger.success(`🌐 Web server running on port ${port}`);
-      logger.info(`   • Health check: http://localhost:${port}/health`);
+      logger.info(`   • Dashboard: http://localhost:${port}/`);
+      logger.info(`   • Health: http://localhost:${port}/health`);
       logger.info(`   • Status: http://localhost:${port}/status`);
-      logger.info(`   • Info: http://localhost:${port}/info`);
+      logger.info(`   • Features: http://localhost:${port}/features`);
+      logger.info(`   • Metrics: http://localhost:${port}/metrics`);
       resolve();
     });
 
@@ -386,15 +508,20 @@ process.on('unhandledRejection', (reason, promise) => {
   // Don't exit immediately, let the process try to recover
 });
 
-// Memory usage monitoring (optional)
-if (config.logging.level === 'debug') {
-  setInterval(() => {
-    const memory = Helpers.getMemoryUsage();
-    if (memory.heapUsed > 200) { // 200MB threshold
-      logger.warning(`High memory usage: ${memory.heapUsed}MB Heap`);
-    }
-  }, 60000); // Check every minute
-}
+// Memory usage monitoring
+setInterval(() => {
+  const memory = Helpers.getMemoryUsage();
+  if (memory.heapUsed > 200) { // 200MB threshold
+    logger.warning(`High memory usage: ${memory.heapUsed}MB Heap`);
+  }
+}, 60000); // Check every minute
+
+// Periodic status logging
+setInterval(() => {
+  const memory = Helpers.getMemoryUsage();
+  const uptime = Helpers.formatUptime(process.uptime());
+  logger.info(`📊 Status - Uptime: ${uptime}, Memory: ${memory.heapUsed}MB`);
+}, 300000); // Log every 5 minutes
 
 // ==================== APPLICATION START ====================
 
@@ -403,9 +530,11 @@ if (config.logging.level === 'debug') {
  */
 async function main(): Promise<void> {
   try {
-    logger.info('='.repeat(50));
-    logger.info('🛡️  SECURE TELEGRAM USERBOT');
-    logger.info('='.repeat(50));
+    logger.info('='.repeat(60));
+    logger.info('🚀 ULTIMATE TELEGRAM USERBOT v3.0');
+    logger.info('='.repeat(60));
+    logger.info('🎯 25+ Features | Node.js + TypeScript | Secure & Fast');
+    logger.info('='.repeat(60));
     
     await initializeUserbot();
     
@@ -421,5 +550,5 @@ main().catch(error => {
   process.exit(1);
 });
 
-// Export for testing purposes (optional)
+// Export for testing purposes
 export { client, app, config, botState };
