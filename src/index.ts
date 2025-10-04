@@ -139,7 +139,9 @@ app.use((req, res, next) => {
 app.get('/', (req, res) => {
   const uptime = Helpers.formatUptime(process.uptime());
   const memory = Helpers.getMemoryUsage();
-  const activeFeatures = Object.keys(botState.features).filter(f => botState.features[f]);
+  const activeFeatures = Object.keys(botState.features).filter((f: string) => 
+    botState.features[f as keyof typeof botState.features]
+  );
   
   res.json({
     status: '🚀 Ultimate Telegram Userbot - ACTIVE',
@@ -268,7 +270,9 @@ app.get('/info', (req, res) => {
     statistics: {
       totalCommands: 25,
       categories: 10,
-      features: Object.keys(botState.features).filter(f => botState.features[f]).length
+      features: Object.keys(botState.features).filter((f: string) => 
+        botState.features[f as keyof typeof botState.features]
+      ).length
     }
   });
 });
@@ -406,8 +410,8 @@ async function initializeUserbot(): Promise<void> {
       const eventHandler = new EventHandler(client);
       const handlers = eventHandler.getHandlers();
       
-      client.addEventHandler(handlers.newMessage);
-      client.addEventHandler(handlers.editedMessage);
+      client.addEventHandler(handlers.newMessage, new (await import('telegram/events')).NewMessage());
+      client.addEventHandler(handlers.editedMessage, new (await import('telegram/events')).EditedMessage());
       
       if (config.features.enableCommands) {
         logger.info('🔧 Command system enabled - 25+ commands available');
@@ -512,7 +516,7 @@ process.on('unhandledRejection', (reason, promise) => {
 setInterval(() => {
   const memory = Helpers.getMemoryUsage();
   if (memory.heapUsed > 200) { // 200MB threshold
-    logger.warning(`High memory usage: ${memory.heapUsed}MB Heap`);
+    logger.warn(`High memory usage: ${memory.heapUsed}MB Heap`); // FIXED: warning → warn
   }
 }, 60000); // Check every minute
 
