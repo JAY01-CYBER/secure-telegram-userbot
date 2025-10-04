@@ -1,6 +1,8 @@
 import { Api } from 'telegram';
 import type { TelegramClient } from 'telegram';
 import { logger } from '../utils/logger.js';
+import { Helpers } from '../utils/helpers.js';
+import type { CommandContext, CommandResult, UserID, ChatID } from '../types/index.js';
 
 export class CommandHandler {
   private client: TelegramClient;
@@ -9,147 +11,130 @@ export class CommandHandler {
     this.client = client;
   }
 
-  async handlePing(message: any): Promise<void> {
-    await message.reply({
-      message: '🏓 **Pong!**\n⚡ Node.js + TypeScript Userbot',
-      parseMode: 'html'
-    });
-    logger.info('Ping command executed');
-  }
-
-  async handleStatus(message: any): Promise<void> {
-    const me = await this.client.getMe();
-    const uptime = process.uptime();
-    const hours = Math.floor(uptime / 3600);
-    const minutes = Math.floor((uptime % 3600) / 60);
-    const seconds = Math.floor(uptime % 60);
-
-    await message.reply({
-      message: `🤖 **Userbot Status**\n\n` +
-               `✅ **Online:** Yes\n` +
-               `👤 **User:** ${me.firstName}\n` +
-               `📱 **Username:** @${me.username || 'N/A'}\n` +
-               `🆔 **ID:** ${me.id}\n` +
-               `⏰ **Uptime:** ${hours}h ${minutes}m ${seconds}s\n` +
-               `🛡️ **Security:** Enabled\n` +
-               `🚀 **Platform:** Node.js + TypeScript`,
-      parseMode: 'html'
-    });
-    logger.info('Status command executed');
-  }
-
-  async handleSpeed(message: any): Promise<void> {
-    const start = Date.now();
-    const tempMsg = await message.reply({ 
-      message: '⏳ Testing speed...' 
-    });
-    const end = Date.now();
-    
-    await this.client.editMessage(tempMsg.chatId!, { 
-      message: tempMsg.id, 
-      text: `🚀 **Speed Test Results**\n\n` +
-            `📊 **Response Time:** ${end - start}ms\n` +
-            `⚡ **Performance:** ${end - start < 1000 ? 'Excellent' : 'Good'}` 
-    });
-    logger.info(`Speed test completed in ${end - start}ms`);
-  }
-
-  async handleEcho(message: any, args: string[]): Promise<void> {
-    if (args.length > 0) {
+  async handlePing(message: any): Promise<CommandResult> {
+    try {
       await message.reply({
-        message: `📢 **Echo:** ${args.join(' ')}`,
+        message: '🏓 **Pong!**\n⚡ Node.js + TypeScript Userbot\n🛡️ Secure & Fast',
         parseMode: 'html'
       });
-      logger.info(`Echo command: ${args.join(' ')}`);
-    } else {
-      await message.reply({
-        message: '❌ **Usage:** `.echo <message>`\n\n' +
-                 '**Example:** `.echo Hello World!`',
-        parseMode: 'html'
-      });
+      
+      logger.info('Ping command executed successfully');
+      
+      return {
+        success: true,
+        message: 'Pong response sent',
+        executionTime: 0,
+        userId: message.senderId,
+        chatId: message.chatId
+      };
+    } catch (error) {
+      logger.error('Ping command failed:', error);
+      return {
+        success: false,
+        error: 'Failed to execute ping command',
+        executionTime: 0,
+        userId: message.senderId,
+        chatId: message.chatId
+      };
     }
   }
 
-  async handleHelp(message: any): Promise<void> {
-    await message.reply({
-      message: `📖 **Available Commands**\n\n` +
-               `🔹 **.ping** - Test bot response\n` +
-               `🔹 **.status** - Show bot status\n` +
-               `🔹 **.speed** - Test response speed\n` +
-               `🔹 **.echo <text>** - Repeat your message\n` +
-               `🔹 **.help** - Show this help message\n\n` +
-               `🛡️ **Security Features:**\n` +
-               `• Secure session management\n` +
-               `• No credentials in code\n` +
-               `• Environment variable protection\n\n` +
-               `🔒 _Secure Userbot v2.0_`,
-      parseMode: 'html'
-    });
-    logger.info('Help command executed');
-  }
-
-  async handleUnknown(message: any): Promise<void> {
-    await message.reply({
-      message: '❓ **Unknown Command**\n\n' +
-               'Use **.help** to see all available commands.\n\n' +
-               '💡 **Tip:** Commands are case-insensitive.',
-      parseMode: 'html'
-    });
-    logger.info('Unknown command attempted');
-  }
-
-  // Admin commands (optional - for future use)
-  async handleRestart(message: any): Promise<void> {
-    // Only allow from specific user IDs
-    const allowedAdmins = []; // Add your user ID here
+  async handleStatus(message: any): Promise<CommandResult> {
+    const startTime = Date.now();
     
-    if (allowedAdmins.length === 0 || !allowedAdmins.includes(message.senderId?.toString())) {
+    try {
+      const me = await this.client.getMe();
+      const uptime = process.uptime();
+      const memory = Helpers.getMemoryUsage();
+      
+      const statusMessage = `🤖 **Userbot Status**\n\n` +
+        `✅ **Online:** Yes\n` +
+        `👤 **User:** ${me.firstName}\n` +
+        `📱 **Username:** @${me.username || 'N/A'}\n` +
+        `🆔 **ID:** ${me.id}\n` +
+        `⏰ **Uptime:** ${Helpers.formatUptime(uptime)}\n` +
+        `💾 **Memory:** ${memory.heapUsed}MB / ${memory.heapTotal}MB\n` +
+        `🛡️ **Security:** Enabled\n` +
+        `🚀 **Platform:** Node.js + TypeScript\n` +
+        `🔧 **Version:** 2.0.0`;
+
       await message.reply({
-        message: '⛔ **Access Denied**\n\nThis command is for administrators only.',
+        message: statusMessage,
         parseMode: 'html'
       });
-      return;
-    }
 
-    await message.reply({
-      message: '🔄 **Restarting...**\n\nBot will be back online shortly.',
-      parseMode: 'html'
-    });
-    
-    logger.info('Restart command executed');
-    process.exit(0); // Render will automatically restart
+      const executionTime = Date.now() - startTime;
+      logger.info(`Status command executed in ${executionTime}ms`);
+
+      return {
+        success: true,
+        message: 'Status information sent',
+        executionTime,
+        userId: message.senderId,
+        chatId: message.chatId,
+        data: { uptime, memory }
+      };
+    } catch (error) {
+      const executionTime = Date.now() - startTime;
+      logger.error('Status command failed:', error);
+      
+      return {
+        success: false,
+        error: 'Failed to fetch status information',
+        executionTime,
+        userId: message.senderId,
+        chatId: message.chatId
+      };
+    }
   }
 
-  async handleBroadcast(message: any, args: string[]): Promise<void> {
-    // Only allow from specific user IDs
-    const allowedAdmins = []; // Add your user ID here
+  async handleSpeed(message: any): Promise<CommandResult> {
+    const startTime = Date.now();
     
-    if (allowedAdmins.length === 0 || !allowedAdmins.includes(message.senderId?.toString())) {
-      await message.reply({
-        message: '⛔ **Access Denied**\n\nThis command is for administrators only.',
+    try {
+      const tempMsg = await message.reply({ 
+        message: '⏳ Testing speed...' 
+      });
+      const endTime = Date.now();
+      const responseTime = endTime - startTime;
+      
+      let performance = 'Excellent ⚡';
+      if (responseTime > 1000) performance = 'Good 👍';
+      if (responseTime > 3000) performance = 'Slow 🐢';
+
+      const speedMessage = `🚀 **Speed Test Results**\n\n` +
+        `📊 **Response Time:** ${responseTime}ms\n` +
+        `⚡ **Performance:** ${performance}\n` +
+        `🕒 **Test Time:** ${Helpers.getTimestamp()}`;
+
+      await this.client.editMessage(tempMsg.chatId!, { 
+        message: tempMsg.id, 
+        text: speedMessage,
         parseMode: 'html'
       });
-      return;
+
+      logger.info(`Speed test completed in ${responseTime}ms - ${performance}`);
+
+      return {
+        success: true,
+        message: 'Speed test completed',
+        executionTime: responseTime,
+        userId: message.senderId,
+        chatId: message.chatId,
+        data: { responseTime, performance }
+      };
+    } catch (error) {
+      const executionTime = Date.now() - startTime;
+      logger.error('Speed test failed:', error);
+      
+      return {
+        success: false,
+        error: 'Speed test failed',
+        executionTime,
+        userId: message.senderId,
+        chatId: message.chatId
+      };
     }
-
-    if (args.length === 0) {
-      await message.reply({
-        message: '❌ **Usage:** `.broadcast <message>`',
-        parseMode: 'html'
-      });
-      return;
-    }
-
-    const broadcastMessage = args.join(' ');
-    
-    await message.reply({
-      message: '📢 **Broadcast Started...**',
-      parseMode: 'html'
-    });
-
-    // Note: Broadcast functionality would need additional implementation
-    // This is just a placeholder
-    
-    logger.info(`Broadcast attempted: ${broadcastMessage}`);
   }
-}
+
+  async
