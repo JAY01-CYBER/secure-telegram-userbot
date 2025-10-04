@@ -2,127 +2,182 @@ import { Api } from 'telegram';
 import type { TelegramClient } from 'telegram';
 import type { NewMessageEvent, EditedMessageEvent } from 'telegram/events';
 import { logger } from '../utils/logger.js';
+import { Helpers } from '../utils/helpers.js';
 import { CommandHandler } from './commandHandler.js';
+import { FeatureHandler } from './featureHandler.js'; // NEW IMPORT
+import type { CommandContext } from '../types/index.js';
 
 export class EventHandler {
   private client: TelegramClient;
   private commandHandler: CommandHandler;
+  private featureHandler: FeatureHandler; // NEW
 
   constructor(client: TelegramClient) {
     this.client = client;
     this.commandHandler = new CommandHandler(client);
+    this.featureHandler = new FeatureHandler(client); // NEW
   }
 
-  // Handle new messages
   async handleNewMessage(event: NewMessageEvent): Promise<void> {
     const message = event.message;
     
-    // Ignore if no text or message is from ourselves
     if (!message.text || message.out) return;
 
     const text = message.text.trim();
     const sender = await message.getSender();
     const chat = await message.getChat();
 
-    // Secure logging (no sensitive info)
+    // Secure logging
     const chatType = chat instanceof Api.Chat ? 'Group' : 'Private';
-    logger.message(`${chatType} message from ${sender?.firstName}: ${text.substring(0, 30)}...`);
+    logger.message(`${chatType} message from ${sender?.firstName}: ${Helpers.truncateText(text, 30)}`);
 
-    // Handle commands (messages starting with .)
-    if (text.startsWith('.')) {
-      await this.handleCommand(text, message, sender);
+    // Check for spam (NEW FEATURE)
+    if (this.featureHandler.containsSpam(text)) {
+      logger.security(`Spam detected from ${sender?.firstName}: ${Helpers.truncateText(text, 30)}`);
+      // You can add auto-delete or warn user here
     }
 
-    // You can add more event handlers here:
-    // - Handle mentions
-    // - Handle specific keywords
-    // - Auto-reply features
-    // etc.
+    // Auto-reply system (NEW FEATURE)
+    const autoReply = this.featureHandler.getAutoReply(text);
+    if (autoReply && !text.startsWith('.')) {
+      try {
+        await message.reply({ message: autoReply, parseMode: 'html' });
+        logger.info(`Auto-reply sent for: ${Helpers.truncateText(text, 20)}`);
+      } catch (error) {
+        logger.error('Failed to send auto-reply:', error);
+      }
+    }
+
+    // Handle commands
+    if (text.startsWith('.')) {
+      await this.handleCommand(text, message, sender, chat);
+    }
   }
 
-  // Handle edited messages
-  async handleEditedMessage(event: EditedMessageEvent): Promise<void> {
-    const message = event.message;
+  private async handleCommand(text: string, message: any, sender: any, chat: any): Promise<void> {
+    const { command, args } = Helpers.parseArgs(text);
     
-    if (!message.text || message.out) return;
-
-    const text = message.text.trim();
-    const sender = await message.getSender();
-
-    logger.message(`Edited message from ${sender?.firstName}: ${text.substring(0, 30)}...`);
-
-    // Optional: Handle edited commands
-    if (text.startsWith('.')) {
-      await message.reply({
-        message: '✏️ **Message Edited**\n\nI see you edited your command!',
-        parseMode: 'html'
-      });
-    }
-  }
-
-  // Handle command parsing and execution
-  private async handleCommand(text: string, message: any, sender: any): Promise<void> {
-    const command = text.slice(1).toLowerCase().split(' ')[0];
-    const args = text.slice(1).split(' ').slice(1);
+    const ctx: CommandContext = {
+      client: this.client,
+      message,
+      sender,
+      chat,
+      args,
+      command
+    };
 
     try {
+      let result;
+
+      // NEW COMMANDS - Using FeatureHandler
       switch (command) {
+        // Media/File Commands
+        case 'caption':
+          result = await this.featureHandler.handleCaption(ctx);
+          break;
+        case 'rename':
+          result = await this.featureHandler.handleRename(ctx);
+          break;
+
+        // Group Management
+        case 'ban':
+          result = await this.featureHandler.handleBan(ctx);
+          break;
+        case 'members':
+          result = await this.featureHandler.handleMembers(ctx);
+          break;
+
+        // Utility Commands
+        case 'weather':
+          result = await this.featureHandler.handleWeather(ctx);
+          break;
+        case 'calc':
+          result = await this.featureHandler.handleCalc(ctx);
+          break;
+
+        // Fun Commands
+        case 'dice':
+          result = await this.featureHandler.handleDice(ctx);
+          break;
+        case 'joke':
+          result = await this.featureHandler.handleJoke(ctx);
+          break;
+
+        // Automation
+        case 'autoreply':
+          result = await this.featureHandler.handleAutoReply(ctx);
+          break;
+        case 'addar':
+          result = await this.featureHandler.handleAddAutoReply(ctx);
+          break;
+
+        // Security
+        case 'antispam':
+          result = await this.featureHandler.handleAntiSpam(ctx);
+          break;
+        case 'addfilter':
+          result = await this.featureHandler.handleAddFilter(ctx);
+          break;
+
+        // Original commands (using existing CommandHandler)
         case 'ping':
-          await this.commandHandler.handlePing(message);
+          result = await this.commandHandler.handlePing(message);
           break;
-
         case 'status':
-          await this.commandHandler.handleStatus(message);
+          result = await this.commandHandler.handleStatus(message);
           break;
-
         case 'speed':
-          await this.commandHandler.handleSpeed(message);
+          result = await this.commandHandler.handleSpeed(message);
           break;
-
         case 'echo':
-          await this.commandHandler.handleEcho(message, args);
+          result = await this.commandHandler.handleEcho(message, args);
           break;
-
         case 'help':
-          await this.commandHandler.handleHelp(message);
+          result = await this.commandHandler.handleHelp(message);
           break;
-
         case 'restart':
-          await this.commandHandler.handleRestart(message);
+          result = await this.commandHandler.handleRestart(message);
           break;
-
         case 'broadcast':
-          await this.commandHandler.handleBroadcast(message, args);
+          result = await this.commandHandler.handleBroadcast(message, args);
           break;
 
         default:
-          await this.commandHandler.handleUnknown(message);
+          result = await this.commandHandler.handleUnknown(message, command);
       }
+
+      this.logCommandResult(command, result);
+
     } catch (error) {
       logger.error(`Command execution error (${command}):`, error);
-      
       await message.reply({
-        message: '❌ **Command Error**\n\n' +
-                 'An error occurred while executing the command. ' +
-                 'Please try again later.',
+        message: '❌ **Command Error**\nPlease try again later.',
         parseMode: 'html'
       });
     }
   }
 
-  // Handle user joined chat
+  // ... rest of the existing eventHandler code remains same
+  private logCommandResult(command: string, result: any): void {
+    if (result?.success) {
+      logger.success(`Command .${command} executed in ${result.executionTime}ms`);
+    } else {
+      logger.error(`Command .${command} failed: ${result?.error}`);
+    }
+  }
+
+  async handleEditedMessage(event: EditedMessageEvent): Promise<void> {
+    // ... existing code
+  }
+
   async handleUserJoined(event: any): Promise<void> {
-    // This is just an example - you can implement welcome messages
-    logger.info('User joined chat event');
+    // ... existing code
   }
 
-  // Handle user left chat
   async handleUserLeft(event: any): Promise<void> {
-    // This is just an example
-    logger.info('User left chat event');
+    // ... existing code
   }
 
-  // Get all event handlers for registration
   getHandlers() {
     return {
       newMessage: this.handleNewMessage.bind(this),
