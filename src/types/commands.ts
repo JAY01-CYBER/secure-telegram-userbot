@@ -20,7 +20,7 @@ export enum CommandCategory {
 
 // Command cooldown configuration
 export interface CooldownConfig {
-  userId: big64;
+  userId: bigint;
   command: string;
   duration: number; // in milliseconds
   lastUsed: Date;
@@ -33,7 +33,7 @@ export interface CommandStats {
   lastUsed: Date;
   averageResponseTime: number;
   errorCount: number;
-  users: big64[];
+  users: bigint[];
 }
 
 // Command help information
@@ -66,8 +66,8 @@ export interface CommandResult {
   error?: string;
   data?: any;
   executionTime: number;
-  userId: big64;
-  chatId: big64;
+  userId: bigint;
+  chatId: bigint;
 }
 
 // Command middleware function
