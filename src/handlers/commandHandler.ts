@@ -11,34 +11,6 @@ export class CommandHandler {
     this.client = client;
   }
 
-  async handlePing(message: any): Promise<CommandResult> {
-    try {
-      await message.reply({
-        message: '🏓 **Pong!**\n⚡ Node.js + TypeScript Userbot\n🛡️ Secure & Fast',
-        parseMode: 'html'
-      });
-      
-      logger.info('Ping command executed successfully');
-      
-      return {
-        success: true,
-        message: 'Pong response sent',
-        executionTime: 0,
-        userId: message.senderId,
-        chatId: message.chatId
-      };
-    } catch (error) {
-      logger.error('Ping command failed:', error);
-      return {
-        success: false,
-        error: 'Failed to execute ping command',
-        executionTime: 0,
-        userId: message.senderId,
-        chatId: message.chatId
-      };
-    }
-  }
-
   async handleStatus(message: any): Promise<CommandResult> {
     const startTime = Date.now();
     
@@ -136,3 +108,4 @@ export class CommandHandler {
       };
     }
   }
+}
