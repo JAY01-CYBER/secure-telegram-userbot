@@ -1,6 +1,6 @@
 import { Api } from 'telegram';
 import type { NewMessageEvent } from 'telegram/events';
-import { logger } from '../utils/logger.js'; // FIXED: Correct import path
+import { logger } from '../utils/logger.js';
 
 export async function messageHandler(event: NewMessageEvent) {
   const message = event.message;
@@ -11,9 +11,10 @@ export async function messageHandler(event: NewMessageEvent) {
 
   const text = message.text.trim();
   const sender = await message.getSender();
+  const senderName = sender && 'firstName' in sender ? sender.firstName : 'Unknown'; // FIXED: Type-safe firstName access
   
   // Secure logging
-  logger.message(`Message from ${sender?.firstName}: ${text.substring(0, 50)}...`);
+  logger.message(`Message from ${senderName}: ${text.substring(0, 50)}...`);
 
   // Command handling
   if (text.startsWith('.')) {
@@ -41,11 +42,12 @@ async function handleCommand(
 
       case 'status':
         const me = await client.getMe();
+        const meName = me && 'firstName' in me ? me.firstName : 'User'; // FIXED: Type-safe firstName access
         const uptime = process.uptime();
         await message.reply({
           message: `🤖 **Userbot Status**\n\n` +
                    `✅ **Online:** Yes\n` +
-                   `👤 **User:** ${me.firstName}\n` +
+                   `👤 **User:** ${meName}\n` +
                    `⏰ **Uptime:** ${Math.floor(uptime / 60)}m ${Math.floor(uptime % 60)}s\n` +
                    `🛡️ **Security:** Enabled`,
           parseMode: 'html'
