@@ -37,7 +37,7 @@ export class EventHandler {
 
     // Track user activity - FIXED: Check if method exists
     if (this.advancedHandler.trackUserActivity) {
-      this.advancedHandler.trackUserActivity(message.senderId);
+      this.advancedHandler.trackUserActivity(BigInt(message.senderId));
     }
 
     // Check for spam - FIXED: Check if method exists
