@@ -134,7 +134,8 @@ export class FeatureHandler {
           sendGifs: true,
           sendGames: true,
           sendInline: true,
-          embedLinks: true
+          embedLinks: true,
+          untilDate: 0 // ✅ Add required untilDate
         })
       }));
 
