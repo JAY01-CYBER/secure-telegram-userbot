@@ -22,7 +22,7 @@ export interface EditedMessageEvent extends BaseEvent {
 export interface DeletedMessageEvent extends BaseEvent {
   type: 'deleted_message';
   messageIds: number[];
-  chatId: big64;
+  chatId: bigint;
 }
 
 // User events
