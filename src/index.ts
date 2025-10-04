@@ -119,9 +119,7 @@ const client = new TelegramClient(
     systemLangCode: 'en',
     timeout: 10000,
     requestRetries: 3,
-    connectionParams: {
-      transport: 'websocket'
-    }
+    Remove connectionParams entirely - not supported
   }
 );
 
