@@ -1,0 +1,23 @@
+name: Dependency Updates
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'  # Weekly on Sunday
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Update dependencies
+      run: |
+        npm update
+        npm audit fix
