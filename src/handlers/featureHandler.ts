@@ -80,9 +80,9 @@ export class FeatureHandler {
       
       if (repliedMsg.media && repliedMsg.document) {
         await this.client.sendFile(message.chatId, {
-          file: repliedMsg.media,
-          fileName: newName, // FIXED: This should work now with proper types
-          replyTo: message.replyToMsgId
+  file: repliedMsg.media,
+  caption: newName, // ✅ Use caption instead
+  replyTo: message.replyToMsgId
         });
         
         logger.info(`File renamed to: ${newName}`);
