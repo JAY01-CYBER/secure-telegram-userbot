@@ -409,7 +409,7 @@ async function initializeUserbot(): Promise<void> {
       const handlers = eventHandler.getHandlers();
       
       client.addEventHandler(handlers.newMessage, new (await import('telegram/events')).NewMessage());
-      client.addEventHandler(handlers.editedMessage, new (await import('telegram/events')).EditedMessage());
+      client.addEventHandler(handlers.editedMessage, new (await import('telegram/events')).NewMessage());
       
       if (config.features.enableCommands) {
         logger.info('🔧 Command system enabled - 25+ commands available');
