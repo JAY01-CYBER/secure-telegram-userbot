@@ -44,7 +44,7 @@ export class Helpers {
   /**
    * Check if user is admin in a group
    */
-  static async isAdmin(client: TelegramClient, chatId: big64, userId: big64): Promise<boolean> {
+  static async isAdmin(client: TelegramClient, chatId: bigint, userId: bigint): Promise<boolean> {
     try {
       const participants = await client.getParticipants(chatId);
       const user = participants.find(p => p.id === userId);
