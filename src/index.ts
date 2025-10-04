@@ -119,7 +119,6 @@ const client = new TelegramClient(
     systemLangCode: 'en',
     timeout: 10000,
     requestRetries: 3,
-    Remove connectionParams entirely - not supported
   }
 );
 
