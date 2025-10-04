@@ -11,6 +11,34 @@ export class CommandHandler {
     this.client = client;
   }
 
+  async handlePing(message: any): Promise<CommandResult> {
+    try {
+      await message.reply({
+        message: '🏓 **Pong!**\n⚡ Node.js + TypeScript Userbot\n🛡️ Secure & Fast',
+        parseMode: 'html'
+      });
+      
+      logger.info('Ping command executed successfully');
+      
+      return {
+        success: true,
+        message: 'Pong response sent',
+        executionTime: 0,
+        userId: message.senderId,
+        chatId: message.chatId
+      };
+    } catch (error) {
+      logger.error('Ping command failed:', error);
+      return {
+        success: false,
+        error: 'Failed to execute ping command',
+        executionTime: 0,
+        userId: message.senderId,
+        chatId: message.chatId
+      };
+    }
+  }
+
   async handleStatus(message: any): Promise<CommandResult> {
     const startTime = Date.now();
     
@@ -103,6 +131,133 @@ export class CommandHandler {
         success: false,
         error: 'Speed test failed',
         executionTime,
+        userId: message.senderId,
+        chatId: message.chatId
+      };
+    }
+  }
+
+  async handleHelp(message: any): Promise<CommandResult> {
+    try {
+      const helpMessage = `🤖 **Available Commands**\n\n` +
+        `.ping - Test bot response\n` +
+        `.status - Check bot status\n` +
+        `.speed - Test speed\n` +
+        `.help - Show this help`;
+
+      await message.reply({
+        message: helpMessage,
+        parseMode: 'html'
+      });
+
+      return {
+        success: true,
+        message: 'Help sent',
+        executionTime: 0,
+        userId: message.senderId,
+        chatId: message.chatId
+      };
+    } catch (error) {
+      logger.error('Help command failed:', error);
+      return {
+        success: false,
+        error: 'Failed to send help',
+        executionTime: 0,
+        userId: message.senderId,
+        chatId: message.chatId
+      };
+    }
+  }
+
+  async handleEcho(message: any, args: string[]): Promise<CommandResult> {
+    try {
+      if (args.length === 0) {
+        await message.reply({
+          message: '❌ Usage: `.echo <message>`',
+          parseMode: 'html'
+        });
+        return {
+          success: false,
+          error: 'No message',
+          executionTime: 0,
+          userId: message.senderId,
+          chatId: message.chatId
+        };
+      }
+
+      await message.reply({
+        message: `📢 ${args.join(' ')}`,
+        parseMode: 'html'
+      });
+
+      return {
+        success: true,
+        message: 'Echo sent',
+        executionTime: 0,
+        userId: message.senderId,
+        chatId: message.chatId
+      };
+    } catch (error) {
+      logger.error('Echo command failed:', error);
+      return {
+        success: false,
+        error: 'Failed to echo',
+        executionTime: 0,
+        userId: message.senderId,
+        chatId: message.chatId
+      };
+    }
+  }
+
+  async handleRestart(message: any): Promise<CommandResult> {
+    try {
+      await message.reply({
+        message: '🔄 **Restarting...**\n\nBot will restart shortly.',
+        parseMode: 'html'
+      });
+
+      // Simulate restart
+      setTimeout(() => process.exit(0), 2000);
+
+      return {
+        success: true,
+        message: 'Restart initiated',
+        executionTime: 0,
+        userId: message.senderId,
+        chatId: message.chatId
+      };
+    } catch (error) {
+      logger.error('Restart command failed:', error);
+      return {
+        success: false,
+        error: 'Failed to restart',
+        executionTime: 0,
+        userId: message.senderId,
+        chatId: message.chatId
+      };
+    }
+  }
+
+  async handleUnknown(message: any, command: string): Promise<CommandResult> {
+    try {
+      await message.reply({
+        message: `❓ **Unknown Command**\n\n\`.${command}\` is not recognized.\nUse \`.help\` for available commands.`,
+        parseMode: 'html'
+      });
+
+      return {
+        success: false,
+        error: `Unknown command: ${command}`,
+        executionTime: 0,
+        userId: message.senderId,
+        chatId: message.chatId
+      };
+    } catch (error) {
+      logger.error('Unknown command failed:', error);
+      return {
+        success: false,
+        error: 'Failed to handle unknown command',
+        executionTime: 0,
         userId: message.senderId,
         chatId: message.chatId
       };
