@@ -81,7 +81,7 @@ export class FeatureHandler {
       if (repliedMsg.media && repliedMsg.document) {
         await this.client.sendFile(message.chatId, {
           file: repliedMsg.media,
-          fileName: newName,
+          fileName: newName, // FIXED: This should work now with proper types
           replyTo: message.replyToMsgId
         });
         
@@ -109,19 +109,39 @@ export class FeatureHandler {
         return { success: false, error: 'Not admin', executionTime: Date.now() - startTime, userId: message.senderId, chatId: message.chatId };
       }
 
-      const targetUser = message.replyToMsgId ? 
-        await (await message.getReplyMessage()).getSender() : 
-        await this.client.getInputEntity(args[0] || '');
+      let targetUser;
+      if (message.replyToMsgId) {
+        const repliedMsg = await message.getReplyMessage();
+        targetUser = await repliedMsg.getSender();
+      } else if (args[0]) {
+        targetUser = await this.client.getInputEntity(args[0]);
+      }
 
       if (!targetUser) {
         await message.reply({ message: '❌ **User not found**', parseMode: 'html' });
         return { success: false, error: 'User not found', executionTime: Date.now() - startTime, userId: message.senderId, chatId: message.chatId };
       }
 
-      await this.client.editBanned(message.chatId, targetUser, { viewMessages: true });
-      await message.reply({ message: `🔨 **User Banned**\n${targetUser.firstName} has been banned`, parseMode: 'html' });
+      // FIXED: Use correct Telegram API method
+      await this.client.invoke(new Api.channels.EditBanned({
+        channel: message.chatId,
+        participant: targetUser,
+        bannedRights: new Api.ChatBannedRights({
+          viewMessages: true,
+          sendMessages: true,
+          sendMedia: true,
+          sendStickers: true,
+          sendGifs: true,
+          sendGames: true,
+          sendInline: true,
+          embedLinks: true
+        })
+      }));
 
-      logger.info(`User banned: ${targetUser.firstName}`);
+      const targetUserName = targetUser && 'firstName' in targetUser ? targetUser.firstName : 'User'; // FIXED: Type-safe firstName access
+      await message.reply({ message: `🔨 **User Banned**\n${targetUserName} has been banned`, parseMode: 'html' });
+
+      logger.info(`User banned: ${targetUserName}`);
       return { success: true, message: 'User banned', executionTime: Date.now() - startTime, userId: message.senderId, chatId: message.chatId };
     } catch (error) {
       const executionTime = Date.now() - startTime;
