@@ -1,24 +1,24 @@
 import { Api } from 'telegram';
 import type { TelegramClient } from 'telegram';
-import type { NewMessageEvent, EditedMessageEvent } from 'telegram/events';
+import type { NewMessageEvent, EditMessageEvent } from 'telegram/events'; // FIXED IMPORT
 import { logger } from '../utils/logger.js';
 import { Helpers } from '../utils/helpers.js';
 import { CommandHandler } from './commandHandler.js';
-import { FeatureHandler } from './featureHandler.js'; // NEW IMPORT
-import { AdvancedFeatures } from './advancedFeatures.js'; // NEW IMPORT
+import { FeatureHandler } from './featureHandler.js';
+import { AdvancedFeatures } from './advancedFeatures.js';
 import type { CommandContext } from '../types/index.js';
 
 export class EventHandler {
   private client: TelegramClient;
   private commandHandler: CommandHandler;
-  private featureHandler: FeatureHandler; // NEW
-  private advancedHandler: AdvancedFeatures; // NEW
+  private featureHandler: FeatureHandler;
+  private advancedHandler: AdvancedFeatures;
 
   constructor(client: TelegramClient) {
     this.client = client;
     this.commandHandler = new CommandHandler(client);
-    this.featureHandler = new FeatureHandler(client); // NEW
-    this.advancedHandler = new AdvancedFeatures(client); // NEW
+    this.featureHandler = new FeatureHandler(client);
+    this.advancedHandler = new AdvancedFeatures(client);
   }
 
   async handleNewMessage(event: NewMessageEvent): Promise<void> {
@@ -30,27 +30,30 @@ export class EventHandler {
     const sender = await message.getSender();
     const chat = await message.getChat();
 
-    // Secure logging
+    // Secure logging - FIXED: Use optional chaining
     const chatType = chat instanceof Api.Chat ? 'Group' : 'Private';
-    logger.message(`${chatType} message from ${sender?.firstName}: ${Helpers.truncateText(text, 30)}`);
+    logger.message(`${chatType} message from ${sender?.firstName || 'Unknown'}: ${Helpers.truncateText(text, 30)}`);
 
-    // NEW: Track user activity
-    this.advancedHandler.trackUserActivity(message.senderId);
-
-    // NEW: Check for spam
-    if (this.featureHandler.containsSpam(text)) {
-      logger.security(`Spam detected from ${sender?.firstName}: ${Helpers.truncateText(text, 30)}`);
-      // You can add auto-delete or warn user here
+    // Track user activity - FIXED: Check if method exists
+    if (this.advancedHandler.trackUserActivity) {
+      this.advancedHandler.trackUserActivity(message.senderId);
     }
 
-    // NEW: Auto-reply system
-    const autoReply = this.featureHandler.getAutoReply(text);
-    if (autoReply && !text.startsWith('.')) {
-      try {
-        await message.reply({ message: autoReply, parseMode: 'html' });
-        logger.info(`Auto-reply sent for: ${Helpers.truncateText(text, 20)}`);
-      } catch (error) {
-        logger.error('Failed to send auto-reply:', error);
+    // Check for spam - FIXED: Check if method exists
+    if (this.featureHandler.containsSpam && this.featureHandler.containsSpam(text)) {
+      logger.security(`Spam detected from ${sender?.firstName || 'Unknown'}: ${Helpers.truncateText(text, 30)}`);
+    }
+
+    // Auto-reply system - FIXED: Check if method exists
+    if (this.featureHandler.getAutoReply) {
+      const autoReply = this.featureHandler.getAutoReply(text);
+      if (autoReply && !text.startsWith('.')) {
+        try {
+          await message.reply({ message: autoReply, parseMode: 'html' });
+          logger.info(`Auto-reply sent for: ${Helpers.truncateText(text, 20)}`);
+        } catch (error) {
+          logger.error('Failed to send auto-reply:', error);
+        }
       }
     }
 
@@ -75,76 +78,75 @@ export class EventHandler {
     try {
       let result;
 
-      // NEW COMMANDS - Using FeatureHandler and AdvancedFeatures
       switch (command) {
-        // ==================== FEATURE HANDLER COMMANDS ====================
+        // Feature Handler Commands
         case 'caption':
-          result = await this.featureHandler.handleCaption(ctx);
+          result = await this.featureHandler.handleCaption?.(ctx);
           break;
         case 'rename':
-          result = await this.featureHandler.handleRename(ctx);
+          result = await this.featureHandler.handleRename?.(ctx);
           break;
         case 'ban':
-          result = await this.featureHandler.handleBan(ctx);
+          result = await this.featureHandler.handleBan?.(ctx);
           break;
         case 'members':
-          result = await this.featureHandler.handleMembers(ctx);
+          result = await this.featureHandler.handleMembers?.(ctx);
           break;
         case 'weather':
-          result = await this.featureHandler.handleWeather(ctx);
+          result = await this.featureHandler.handleWeather?.(ctx);
           break;
         case 'calc':
-          result = await this.featureHandler.handleCalc(ctx);
+          result = await this.featureHandler.handleCalc?.(ctx);
           break;
         case 'dice':
-          result = await this.featureHandler.handleDice(ctx);
+          result = await this.featureHandler.handleDice?.(ctx);
           break;
         case 'joke':
-          result = await this.featureHandler.handleJoke(ctx);
+          result = await this.featureHandler.handleJoke?.(ctx);
           break;
         case 'autoreply':
-          result = await this.featureHandler.handleAutoReply(ctx);
+          result = await this.featureHandler.handleAutoReply?.(ctx);
           break;
         case 'addar':
-          result = await this.featureHandler.handleAddAutoReply(ctx);
+          result = await this.featureHandler.handleAddAutoReply?.(ctx);
           break;
         case 'antispam':
-          result = await this.featureHandler.handleAntiSpam(ctx);
+          result = await this.featureHandler.handleAntiSpam?.(ctx);
           break;
         case 'addfilter':
-          result = await this.featureHandler.handleAddFilter(ctx);
+          result = await this.featureHandler.handleAddFilter?.(ctx);
           break;
 
-        // ==================== ADVANCED FEATURES COMMANDS ====================
+        // Advanced Features Commands
         case 'ytdl':
-          result = await this.advancedHandler.handleYouTubeDownload(ctx);
+          result = await this.advancedHandler.handleYouTubeDownload?.(ctx);
           break;
         case 'ud':
-          result = await this.advancedHandler.handleUrbanDictionary(ctx);
+          result = await this.advancedHandler.handleUrbanDictionary?.(ctx);
           break;
         case 'wikipedia':
-          result = await this.advancedHandler.handleWikipedia(ctx);
+          result = await this.advancedHandler.handleWikipedia?.(ctx);
           break;
         case 'quiz':
-          result = await this.advancedHandler.handleQuiz(ctx);
+          result = await this.advancedHandler.handleQuiz?.(ctx);
           break;
         case 'love':
-          result = await this.advancedHandler.handleLoveCalculator(ctx);
+          result = await this.advancedHandler.handleLoveCalculator?.(ctx);
           break;
         case 'reminder':
-          result = await this.advancedHandler.handleReminder(ctx);
+          result = await this.advancedHandler.handleReminder?.(ctx);
           break;
         case 'stats':
-          result = await this.advancedHandler.handleStats(ctx);
+          result = await this.advancedHandler.handleStats?.(ctx);
           break;
         case 'quote':
-          result = await this.advancedHandler.handleQuote(ctx);
+          result = await this.advancedHandler.handleQuote?.(ctx);
           break;
         case 'broadcast':
-          result = await this.advancedHandler.handleBroadcast(ctx);
+          result = await this.advancedHandler.handleBroadcast?.(ctx);
           break;
 
-        // ==================== ORIGINAL COMMAND HANDLER COMMANDS ====================
+        // Command Handler Commands
         case 'ping':
           result = await this.commandHandler.handlePing(message);
           break;
@@ -155,20 +157,22 @@ export class EventHandler {
           result = await this.commandHandler.handleSpeed(message);
           break;
         case 'echo':
-          result = await this.commandHandler.handleEcho(message, args);
+          result = await this.commandHandler.handleEcho?.(message, args);
           break;
         case 'help':
-          result = await this.commandHandler.handleHelp(message);
+          result = await this.commandHandler.handleHelp?.(message);
           break;
         case 'restart':
-          result = await this.commandHandler.handleRestart(message);
+          result = await this.commandHandler.handleRestart?.(message);
           break;
 
         default:
-          result = await this.commandHandler.handleUnknown(message, command);
+          result = await this.commandHandler.handleUnknown?.(message, command);
       }
 
-      this.logCommandResult(command, result);
+      if (result) {
+        this.logCommandResult(command, result);
+      }
 
     } catch (error) {
       logger.error(`Command execution error (${command}):`, error);
@@ -192,8 +196,7 @@ export class EventHandler {
     }
   }
 
-  // ... REST OF THE EXISTING CODE REMAINS SAME ...
-  async handleEditedMessage(event: EditedMessageEvent): Promise<void> {
+  async handleEditedMessage(event: EditMessageEvent): Promise<void> { // FIXED TYPE
     const message = event.message;
     
     if (!message.text || message.out) return;
@@ -201,9 +204,8 @@ export class EventHandler {
     const text = message.text.trim();
     const sender = await message.getSender();
 
-    logger.message(`Edited message from ${sender?.firstName}: ${Helpers.truncateText(text, 30)}`);
+    logger.message(`Edited message from ${sender?.firstName || 'Unknown'}: ${Helpers.truncateText(text, 30)}`);
 
-    // Optional: Handle edited commands
     if (text.startsWith('.')) {
       try {
         await message.reply({
@@ -221,12 +223,11 @@ export class EventHandler {
       const user = await event.getUser();
       const chat = await event.getChat();
       
-      logger.info(`User ${user.firstName} joined chat: ${chat.title}`);
+      logger.info(`User ${user?.firstName || 'Unknown'} joined chat: ${chat?.title || 'Unknown'}`);
       
-      // Optional: Send welcome message
       if (chat instanceof Api.Chat) {
         await this.client.sendMessage(chat.id, {
-          message: `👋 Welcome ${user.firstName} to the group!`
+          message: `👋 Welcome ${user?.firstName || 'User'} to the group!`
         });
       }
     } catch (error) {
@@ -239,7 +240,7 @@ export class EventHandler {
       const user = await event.getUser();
       const chat = await event.getChat();
       
-      logger.info(`User ${user.firstName} left chat: ${chat.title}`);
+      logger.info(`User ${user?.firstName || 'Unknown'} left chat: ${chat?.title || 'Unknown'}`);
     } catch (error) {
       logger.error('Failed to handle user left event:', error);
     }
