@@ -1,12 +1,13 @@
 {
   "name": "secure-telegram-userbot",
   "version": "1.0.0",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "gen-session": "tsx scripts/generateSession.ts",
+    "session": "node session.js",
     "clean": "rm -rf dist"
   },
   "dependencies": {
